@@ -2,7 +2,7 @@
 - **Título do Projeto**: Location404 - Jogo de Geolocalização Multijogador em Tempo Real
 - **Nome do Estudante**: Ryan Gabriel Mazzei Bromati
 - **Curso**: Engenharia de Software
-- **Data**: Julho 2025
+- **Data**: Novembro 2024
 
 # Resumo
 Este documento apresenta a especificação técnica do Location404, um jogo de geolocalização multijogador em tempo real inspirado no conceito do GeoGuessr. O projeto adota uma arquitetura de microsserviços com C# .NET 9+ e Vue 3, garantindo escalabilidade, alta disponibilidade e separação clara de responsabilidades. O Location404 proporcionará uma experiência imersiva, permitindo que os usuários testem seus conhecimentos geográficos em diversos cenários e compitam com outros jogadores, sustentado por uma infraestrutura robusta de serviços distribuídos.
@@ -132,7 +132,7 @@ O Location404 seguirá uma arquitetura de microsserviços baseada em Domain-Driv
 - **Dragonfly**: Cache distribuído Redis-compatible para fila de matchmaking e estado de partidas.
 - **PostgreSQL**: Banco de dados principal (2 instâncias: auth + data).
 - **RabbitMQ**: Message broker para comunicação assíncrona entre serviços.
-- **Prometheus + Grafana + Loki**: Stack de monitoramento e métricas (futuro).
+- **Grafana LGTM Stack**: Loki (logs), Grafana (visualização), Tempo (traces), Prometheus (métricas) - implementado com OpenTelemetry.
 
 #### Padrões de Arquitetura
 
@@ -158,7 +158,11 @@ O Location404 seguirá uma arquitetura de microsserviços baseada em Domain-Driv
 
 **Modelo C4: Contêineres**
 
-*![Diagrama-C4-LVL2](./diagramas/c4-lvl2-container.png)*
+![Diagrama C4 - Container Level](https://raw.githubusercontent.com/Location404/location404-utils/main/diagrams/architecture/diagrama-c4-container.svg)
+
+**Fluxo Real-time (SignalR)**
+
+![Diagrama SignalR Matchmaking e Gameplay](https://raw.githubusercontent.com/Location404/location404-utils/main/diagrams/architecture/diagrama-signalr.svg)
 
 ### 3.3. Stack Tecnológica
 
@@ -210,26 +214,28 @@ O Location404 seguirá uma arquitetura de microsserviços baseada em Domain-Driv
 
 **Infraestrutura e DevOps:**
 
-- **Docker & Docker Compose**: Para conteinerização e desenvolvimento local.
-- **Traefik v3**: Para proxy reverso, load balancing e SSL automático (futuro).
+- **Docker Swarm**: Orquestração de containers em produção com 2 réplicas por serviço.
+- **Traefik v3**: Proxy reverso, load balancing e SSL automático com Let's Encrypt.
 - **Dragonfly**: Cache distribuído Redis-compatible para matchmaking e estado de jogo.
 - **PostgreSQL 16+**: Banco de dados principal (2 instâncias: auth + data).
 - **RabbitMQ 3.12+**: Para mensageria assíncrona entre serviços (match.ended events).
-- **Prometheus & Grafana**: Para métricas e dashboards (futuro).
-- **Loki**: Para agregação de logs (futuro).
-- **Jaeger**: Para distributed tracing (futuro).
-- **GitHub Actions**: Para CI/CD automatizado.
+- **Grafana LGTM Stack**: Loki (logs), Grafana (dashboards), Tempo (traces), Prometheus (métricas).
+- **OpenTelemetry**: Instrumentação padronizada via Location404.Shared.Observability (NuGet).
+- **GitHub Actions**: CI/CD automatizado com build e push para GitHub Container Registry.
+- **Dokploy**: Platform de deploy e gerenciamento de stacks Docker.
 
 #### Ambiente de Hospedagem
 
-O sistema será hospedado em uma **VPS de alta performance** com as seguintes especificações mínimas:
-- **CPU**: 8 vCPUs (AMD/Intel)
-- **RAM**: 32GB DDR4
-- **Storage**: 500GB NVMe SSD
-- **Bandwidth**: 1Gbps ilimitado
+O sistema está hospedado em uma **VPS** com as seguintes especificações:
+- **CPU**: 2 cores (AMD/Intel)
+- **RAM**: 8GB DDR4
+- **Storage**: SSD
+- **Domínio**: location404.com (em migração de IP para domínio)
 - **OS**: Ubuntu 22.04 LTS
 
-Esta configuração permitirá controle total sobre o ambiente de execução, rede, segurança e escalabilidade, facilitando a implantação de microsserviços, configurações personalizadas de proxy reverso com Traefik e otimizações específicas de desempenho.
+Esta configuração permite controle total sobre o ambiente de execução, rede, segurança e escalabilidade, facilitando a implantação de microsserviços com Docker Swarm, configurações personalizadas de proxy reverso com Traefik e otimizações específicas de desempenho.
+
+**Limitações Atuais**: Com 2 cores, o ambiente roda **1 réplica por serviço** (ao invés de 2), sem auto-scaling horizontal nativo do Docker Swarm. Um roadmap futuro prevê migração para Kubernetes (K3s) para implementar HPA (Horizontal Pod Autoscaler) baseado em CPU/memória.
 
 ### 3.4. Considerações de Segurança
 
@@ -295,16 +301,29 @@ O Location404 implementará múltiplas camadas de segurança:
 
 ## 5. Próximos Passos
 
-### Cronograma de Desenvolvimento Revisado
+### Status de Desenvolvimento (Novembro 2024)
 
-| Período           | Atividades                                                                                                                                                                                                                         |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Julho 2025**    | - Finalização e aprovação do RFC<br>- Setup do ambiente de desenvolvimento completo<br>- Configuração de CI/CD com GitHub Actions<br>- Implementação inicial do location404-auth<br>- Criação do Location404.Observability-Sdk |
-| **Agosto 2025**   | - Conclusão do location404-auth com JWT e OAuth<br>- Setup do Traefik com SSL automático<br>- Desenvolvimento inicial do frontend Vue 3<br>- Configuração de monitoramento básico via Observability-Sdk                              |
-| **Setembro 2025** | - Desenvolvimento do location404-game com SignalR<br>- Integração com Google Maps API<br>- Implementação do location404-data<br>- Interface de usuário para jogabilidade básica                                                                    |
-| **Outubro 2025**  | - Sistema de pontuação (Haversine) e rankings (ELO)<br>- Integração RabbitMQ entre serviços<br>- Implementação de testes automatizados<br>- Otimizações de performance e cache                                                                                |
-| **Novembro 2025** | - Sistema de analytics customizado via Observability-Sdk<br>- Testes de carga e stress<br>- Refinamento da UX/UI<br>- Implementação de recursos de segurança avançados                                                             |
-| **Dezembro 2025** | - Testes finais de sistema<br>- Documentação completa<br>- Deploy em produção<br>- Preparação para apresentação final                                                                                                              |
+**Componentes Implementados:**
+- ✅ location404-auth: Autenticação JWT + RefreshToken + OAuth Google
+- ✅ location404-game: Engine real-time com SignalR + matchmaking
+- ✅ location404-data: API de localizações (60 seeds) + ranking ELO
+- ✅ location404-web: Interface Vue 3 + TypeScript + Pinia
+- ✅ Location404.Shared.Observability: SDK OpenTelemetry (NuGet publicado)
+- ✅ Docker Swarm em produção com Traefik v3 + SSL automático
+- ✅ Grafana LGTM Stack (Loki, Grafana, Tempo, Prometheus)
+- ✅ RabbitMQ para eventos assíncronos (match.ended)
+- ✅ CI/CD com GitHub Actions
+
+**Testes Implementados:**
+- 28 testes xUnit (75% cobertura backend, 28% frontend)
+- SonarCloud: Grade A, 0 code smells
+- Health checks em todos os serviços
+
+**Próximos Passos (Dezembro 2024):**
+- Testes E2E com Playwright/Cypress
+- Implementar circuit breaker (Polly)
+- Rate limiting no Traefik
+- Preparação para Demo Day e apresentação final
 
 ### Métricas de Sucesso
 - **Performance**: 95% das requisições < 500ms
