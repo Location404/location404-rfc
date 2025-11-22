@@ -160,10 +160,6 @@ O Location404 seguirá uma arquitetura de microsserviços baseada em Domain-Driv
 
 ![Diagrama C4 - Container Level](https://raw.githubusercontent.com/Location404/location404-utils/main/diagrams/architecture/diagrama-c4-container.svg)
 
-**Fluxo Real-time (SignalR)**
-
-![Diagrama SignalR Matchmaking e Gameplay](https://raw.githubusercontent.com/Location404/location404-utils/main/diagrams/architecture/diagrama-signalr.svg)
-
 ### 3.3. Stack Tecnológica
 
 #### Linguagens de Programação
