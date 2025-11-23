@@ -106,7 +106,7 @@ O projeto adota uma arquitetura de microsserviços para garantir escalabilidade 
 
 ##### Diagrama de Casos de Uso - UC01: Jogar Partida
 
-![Diagrama de Casos de Uso - UC01](https://raw.githubusercontent.com/Location404/location404-utils/main/diagrams/use-cases/uc-jogar-rodada.svg)
+![Diagrama de Casos de Uso - UC01](https://github.com/Location404/location404-utils/blob/main/diagrams/use-cases/uc-jogar-rodada.svg)
 
 **Casos de Uso Principais:**
 - **UC01**: Jogar Partida
