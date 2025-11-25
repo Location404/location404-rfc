@@ -309,7 +309,7 @@ O Location404 implementará múltiplas camadas de segurança:
 - ✅ CI/CD com GitHub Actions
 
 **Testes Implementados:**
-- 28 testes xUnit (75% cobertura backend, 28% frontend)
+- +80% cobertura backend no 25%  no frontend)
 - SonarCloud: Grade A, 0 code smells
 - Health checks em todos os serviços
 
