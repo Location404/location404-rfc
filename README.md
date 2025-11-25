@@ -356,7 +356,7 @@ O Location404 implementará múltiplas camadas de segurança:
 #### Infraestrutura de Produção
 | Componente | Especificação | Justificativa |
 |------------|--------------|---------------|
-| **Servidor Principal** | 8 vCPUs, 32GB RAM, 500GB NVMe | Comportar todos os microsserviços com margem |
+| **Servidor Principal** | 2 vCPUs, 8GB RAM, 500GB NVMe | Comportar todos os microsserviços|
 | **Banco PostgreSQL** | Cluster com replicação read-only | Alta disponibilidade e performance |
 | **Dragonfly** | Instância única, 4GB RAM | Cache distribuído Redis-compatible |
 | **Monitoramento** | Prometheus + Grafana + Loki | Observabilidade completa |
