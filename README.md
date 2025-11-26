@@ -2,7 +2,7 @@
 - **Título do Projeto**: Location404 - Jogo de Geolocalização Multijogador em Tempo Real
 - **Nome do Estudante**: Ryan Gabriel Mazzei Bromati
 - **Curso**: Engenharia de Software
-- **Data**: Novembro 2024
+- **Data**: 2024-2025
 
 # Resumo
 Este documento apresenta a especificação técnica do Location404, um jogo de geolocalização multijogador em tempo real inspirado no conceito do GeoGuessr. O projeto adota uma arquitetura de microsserviços com C# .NET 9+ e Vue 3, garantindo escalabilidade, alta disponibilidade e separação clara de responsabilidades. O Location404 proporcionará uma experiência imersiva, permitindo que os usuários testem seus conhecimentos geográficos em diversos cenários e compitam com outros jogadores, sustentado por uma infraestrutura robusta de serviços distribuídos.
@@ -49,7 +49,7 @@ O projeto adota uma arquitetura de microsserviços para garantir escalabilidade 
 
 ### Limitações
 
-- O projeto não abordará a criação ou captura de imagens geográficas próprias, utilizando integrações com APIs de terceiros (Google Street View API, Mapbox).
+- O projeto não abordará a criação ou captura de imagens geográficas próprias, utilizando integrações com APIs de terceiros (Google Street View API).
 - O sistema será inicialmente otimizado apenas para plataforma web (desktop e móvel), sem aplicativos nativos para dispositivos móveis.
 - A cobertura geográfica inicial poderá ser limitada com base na disponibilidade de dados de qualidade das APIs utilizadas.
 - O projeto não incluirá múltiplos modos de jogo na versão inicial, focando apenas no modo padrão de identificação de localização.
@@ -77,7 +77,7 @@ O projeto adota uma arquitetura de microsserviços para garantir escalabilidade 
 9. **RF09** - O sistema deve permitir que usuários visualizem e editem seu perfil.
 10. **RF10** - O sistema deve permitir que usuários recuperem senhas via email.
 11. **RF11** - O sistema deve exibir estatísticas detalhadas de desempenho do jogador.
-13. **RF12** - O sistema deve implementar sistema de níveis baseado na experiência do jogador.
+12. **RF12** - O sistema deve implementar sistema de níveis baseado na experiência do jogador.
 
 **Requisitos Não-Funcionais (RNF):**
 
@@ -111,11 +111,11 @@ O projeto adota uma arquitetura de microsserviços para garantir escalabilidade 
 **Casos de Uso Principais:**
 - **UC01**: Jogar Partida
 - **UC02**: Autenticar Usuário
-- **UC02**: Gerenciar Perfil
-- **UC03**: Calcular Pontuação
-- **UC04**: Visualizar Rankings
-- **UC05**: Gerenciar Amizades
-- **UC06**: Visualizar Estatísticas
+- **UC03**: Gerenciar Perfil
+- **UC04**: Calcular Pontuação
+- **UC05**: Visualizar Rankings
+- **UC06**: Gerenciar Amizades
+- **UC07**: Visualizar Estatísticas
 
 ### 3.2. Considerações de Design
 
@@ -126,14 +126,14 @@ O Location404 seguirá uma arquitetura de microsserviços baseada em Domain-Driv
 1. **Traefik**: Proxy reverso e load balancer para roteamento de requisições com SSL termination automático.
 2. **location404-auth**: Gerenciamento de identidade, autenticação e autorização com JWT e refresh tokens.
 3. **location404-game**: Lógica central de jogabilidade em tempo real via SignalR, matchmaking, cálculo de pontuações e mecânicas de jogo.
-4. **location404-data**: Fornecimento de dados geográficos, estatísticas de jogadores, histórico de partidas e rankings.
-5. **Location404.Observability-Sdk**: SDK interno compartilhado para instrumentação padronizada de todos os serviços, incluindo métricas (Prometheus), tracing distribuído (Jaeger) e logs estruturados (Loki).
+4. **location404-data**: Serviço de persistência e análise responsável por gerenciar localizações (+100 seeds), processar eventos de partidas via RabbitMQ, persistir histórico completo, calcular estatísticas de jogadores e manter sistema de ranking global.
+5. **Location404.Shared.Observability**: SDK interno compartilhado para instrumentação padronizada de todos os serviços, incluindo métricas (Prometheus), tracing distribuído (Jaeger) e logs estruturados (Loki).
 
 **Componentes de Infraestrutura:**
 - **Dragonfly**: Cache distribuído Redis-compatible para fila de matchmaking e estado de partidas.
 - **PostgreSQL**: Banco de dados principal (2 instâncias: auth + data).
 - **RabbitMQ**: Message broker para comunicação assíncrona entre serviços.
-- **Grafana LGTM Stack**: Loki (logs), Grafana (visualização), Tempo (traces), Prometheus (métricas) - implementado com OpenTelemetry.
+- **Grafana LGTM Stack + Pyroscope**: Loki (logs), Grafana (visualização), Tempo (traces), Prometheus (métricas), Pyroscope (profiling) - implementado com OpenTelemetry.
 
 #### Padrões de Arquitetura
 
@@ -173,38 +173,34 @@ O Location404 seguirá uma arquitetura de microsserviços baseada em Domain-Driv
 
 - **ASP.NET Core 9+**: Framework base para desenvolvimento de APIs RESTful com suporte nativo a OpenTelemetry.
 - **Entity Framework Core 9+**: ORM para acesso a dados com otimizações de performance.
-- **ASP.NET Core Identity**: Para autenticação e autorização robuста.
-- **MediatR**: Para implementação do padrão mediator e CQRS.
+- **LiteBus**: Para implementação do padrão mediator e CQRS (command/query bus pattern).
 - **Polly**: Para implementação de políticas de resiliência (Circuit Breaker, Retry, Timeout).
 - **SignalR**: Para comunicação em tempo real entre jogadores.
 - **Serilog**: Para logging estruturado com sinks para múltiplos destinos.
-- **OpenAPI/Scalar**: Para documentação automática de APIs.
-- **Hangfire**: Para processamento de jobs em background.
+- **OpenAPI/Scalar**: Para documentação automática de APIs (Scalar.AspNetCore para UI interativa).
 - **StackExchange.Redis**: Cliente .NET para Dragonfly (Redis-compatible).
 - **RabbitMQ.Client**: Para integração com message broker.
+- **BackgroundService**: Para processamento de jobs em background (consumer RabbitMQ).
 
 **Testes:**
 - **xUnit**: Framework de testes unitários.
 - **Moq**: Para criação de mocks.
-- **Testcontainers**: Para testes de integração com containers.
 
 **Frontend (Vue 3):**
 
 - **Vue 3**: Framework principal com Composition API.
 - **Vue Router 4**: Para roteamento SPA.
-- **Pinia**: Para gerenciamento de estado global.
-- **Leaflet**: Para visualização de mapas interativos.
-- **Chart.js**: Para visualização de estatísticas e gráficos.
+- **Pinia**: Para gerenciamento de estado global com persistência (pinia-plugin-persistedstate).
+- **Google Maps JavaScript API**: Para visualização de mapas interativos e Street View.
 - **TailwindCSS**: Para estilização utilitária e responsiva.
 - **Vite**: Build tool otimizado para desenvolvimento.
 - **Axios**: Para requisições HTTP com interceptors.
-- **VueUse**: Coleção de composables utilitários.
+- **@microsoft/signalr**: Cliente SignalR para comunicação real-time.
+- **vue-sonner**: Sistema de notificações toast.
 
 **Testes Frontend:**
-- **Vitest**: Para testes unitários rápidos.
+- **Vitest**: Para testes unitários rápidos com cobertura via v8.
 - **@testing-library/vue**: Para testes de componentes.
-- **Cypress**: Para testes end-to-end.
-- **MSW (Mock Service Worker)**: Para simulação de APIs.
 
 **Infraestrutura e DevOps:**
 
@@ -213,7 +209,7 @@ O Location404 seguirá uma arquitetura de microsserviços baseada em Domain-Driv
 - **Dragonfly**: Cache distribuído Redis-compatible para matchmaking e estado de jogo.
 - **PostgreSQL 16+**: Banco de dados principal (2 instâncias: auth + data).
 - **RabbitMQ 3.12+**: Para mensageria assíncrona entre serviços (match.ended events).
-- **Grafana LGTM Stack**: Loki (logs), Grafana (dashboards), Tempo (traces), Prometheus (métricas).
+- **Grafana LGTM Stack + Pyroscope**: Loki (logs), Grafana (dashboards), Tempo (traces), Prometheus (métricas), Pyroscope (profiling).
 - **OpenTelemetry**: Instrumentação padronizada via Location404.Shared.Observability (NuGet).
 - **GitHub Actions**: CI/CD automatizado com build e push para GitHub Container Registry.
 - **Dokploy**: Platform de deploy e gerenciamento de stacks Docker.
@@ -221,32 +217,31 @@ O Location404 seguirá uma arquitetura de microsserviços baseada em Domain-Driv
 #### Ambiente de Hospedagem
 
 O sistema está hospedado em uma **VPS** com as seguintes especificações:
-- **CPU**: 2 cores (AMD/Intel)
-- **RAM**: 8GB DDR4
-- **Storage**: SSD
-- **Domínio**: location404.com (em migração de IP para domínio)
+- **CPU**: 2 cores
+- **RAM**: 8 GB
+- **Storage**: 100 GB SSD
+- **Domínio**: location404.com
 - **OS**: Ubuntu 22.04 LTS
 
 Esta configuração permite controle total sobre o ambiente de execução, rede, segurança e escalabilidade, facilitando a implantação de microsserviços com Docker Swarm, configurações personalizadas de proxy reverso com Traefik e otimizações específicas de desempenho.
 
-**Limitações Atuais**: Com 2 cores, o ambiente roda **1 réplica por serviço** (ao invés de 2), sem auto-scaling horizontal nativo do Docker Swarm. Um roadmap futuro prevê migração para Kubernetes (K3s) para implementar HPA (Horizontal Pod Autoscaler) baseado em CPU/memória.
+**Configuração Atual**: O ambiente roda **2 réplicas por serviço** (web, auth, game, data) com load balancing via Traefik. Limitação: Docker Swarm não possui auto-scaling horizontal nativo (HPA). Um roadmap futuro prevê migração para Kubernetes (K3s) para implementar Horizontal Pod Autoscaler baseado em CPU/memória.
 
 ### 3.4. Considerações de Segurança
 
 O Location404 implementará múltiplas camadas de segurança:
 
 #### 3.4.1. Autenticação e Autorização
-- **OAuth 2.0/OpenID Connect** com PKCE para autenticação segura
-- **Integração com Google OAuth** para login social
 - **JWT (JSON Web Tokens)** com tempo de expiração de 15 minutos
 - **Refresh tokens** com rotação automática e tempo de vida de 7 dias
 - **Rate limiting** específico para tentativas de login
+- **OAuth 2.0/OpenID Connect** com PKCE (planejado para versão futura)
+- **Integração com Google OAuth** para login social (planejado para versão futura)
+- **Confirmação de email** para novos cadastros (planejado para versão futura)
 
 #### 3.4.2. Proteção de Dados
 - **Criptografia em repouso**: AES-256 para dados sensíveis no banco de dados
 - **Hashing de senhas**: bcrypt com salt randômico e custo adaptável
-- **Tokenização** de dados sensíveis quando possível
-- **Anonimização** de dados para análises e métricas
 
 #### 3.4.3. Segurança da API
 - **CORS configurado** com whitelist de domínios específicos
@@ -256,11 +251,8 @@ O Location404 implementará múltiplas camadas de segurança:
 - **Rate limiting adaptativo** baseado em comportamento do usuário
 
 #### 3.4.4. Segurança da Infraestrutura
-- **Segmentação de rede** com VLANs isoladas para cada serviço
 - **Firewall de aplicação web (WAF)** configurado no Traefik
-- **Princípio de privilégio mínimo** para todos os containers e serviços
 - **Escaneamento automático** de vulnerabilidades com dependabot
-- **Atualizações de segurança** automatizadas para imagens base
 - **Secrets management** com Docker Secrets ou vault external
 - **Network policies** restritivas entre serviços
 
@@ -283,14 +275,14 @@ O Location404 implementará múltiplas camadas de segurança:
 3. **Iniciar Rodada**: location404-game → location404-data (buscar localização aleatória) → Cliente
 4. **Submeter Palpite**: Cliente → SignalR → location404-game → Cálculo (Haversine) → RabbitMQ
 5. **Persistir Partida**: location404-game → RabbitMQ → location404-data (salvar match + atualizar stats)
-6. **Observabilidade**: Todos os serviços → Location404.Observability-Sdk → Prometheus, Loki, Jaeger
+6. **Observabilidade**: Todos os serviços → Location404.Shared.Observability → Prometheus, Loki, Tempo
 
 ### 4.2. Estratégia de Cache
 - **Dragonfly**: Fila de matchmaking (SortedSet), estado de partidas ativas (TTL: 2h), palpites temporários (TTL: 5min)
 
 ### 4.3. Estratégia de Banco de Dados
 - **PostgreSQL (location404-auth)**: Usuários, senhas hash (BCrypt), refresh tokens
-- **PostgreSQL (location404-data)**: 60 localizações seed, histórico de partidas, rodadas, estatísticas de jogadores (ELO)
+- **PostgreSQL (location404-data)**: +100 localizações seed, histórico de partidas, rodadas, estatísticas de jogadores
 - **Dragonfly**: Cache distribuído, matchmaking queue, estado temporário de jogo
 
 ## 5. Próximos Passos
@@ -298,13 +290,13 @@ O Location404 implementará múltiplas camadas de segurança:
 ### Status de Desenvolvimento (Novembro 2024)
 
 **Componentes Implementados:**
-- ✅ location404-auth: Autenticação JWT + RefreshToken + OAuth Google
+- ✅ location404-auth: Autenticação JWT + RefreshToken
 - ✅ location404-game: Engine real-time com SignalR + matchmaking
-- ✅ location404-data: API de localizações (60 seeds) + ranking ELO
+- ✅ location404-data: API de localizações (+100 seeds) + ranking global
 - ✅ location404-web: Interface Vue 3 + TypeScript + Pinia
 - ✅ Location404.Shared.Observability: SDK OpenTelemetry (NuGet publicado)
 - ✅ Docker Swarm em produção com Traefik v3 + SSL automático
-- ✅ Grafana LGTM Stack (Loki, Grafana, Tempo, Prometheus)
+- ✅ Grafana LGTM Stack + Pyroscope (Loki, Grafana, Tempo, Prometheus, Pyroscope)
 - ✅ RabbitMQ para eventos assíncronos (match.ended)
 - ✅ CI/CD com GitHub Actions
 
@@ -314,10 +306,17 @@ O Location404 implementará múltiplas camadas de segurança:
 - Health checks em todos os serviços
 
 **Próximos Passos (Dezembro 2024):**
-- Testes E2E com Playwright/Cypress
-- Implementar circuit breaker (Polly)
+- Testes E2E com Playwright ou Cypress
 - Rate limiting no Traefik
 - Preparação para Demo Day e apresentação final
+
+**Melhorias Futuras Planejadas:**
+- 🔮 **Google OAuth**: Integração com Google OAuth 2.0/OpenID Connect para login social
+- 🔮 **Confirmação de Email**: Sistema de verificação de email para novos cadastros
+- 🔮 **Recuperação de Senha**: Fluxo de reset de senha via email
+- 🔮 **Sistema de Amizades**: Adicionar amigos e desafiar para partidas
+- 🔮 **Sistema de Níveis**: Experiência (XP) e progressão de níveis
+- 🔮 **Migração para Kubernetes (K3s)**: Auto-scaling horizontal com HPA
 
 ### Métricas de Sucesso
 - **Performance**: 95% das requisições < 500ms
@@ -356,25 +355,23 @@ O Location404 implementará múltiplas camadas de segurança:
 #### Infraestrutura de Produção
 | Componente | Especificação | Justificativa |
 |------------|--------------|---------------|
-| **Servidor Principal** | 2 vCPUs, 8GB RAM, 500GB NVMe | Comportar todos os microsserviços|
-| **Banco PostgreSQL** | Cluster com replicação read-only | Alta disponibilidade e performance |
-| **Dragonfly** | Instância única, 4GB RAM | Cache distribuído Redis-compatible |
-| **Monitoramento** | Prometheus + Grafana + Loki | Observabilidade completa |
+| **Servidor Principal (VPS)** | 2 cores, 8 GB RAM, 100 GB SSD | Hospedagem de todos os microsserviços com Docker Swarm |
+| **PostgreSQL** | 2 instâncias independentes (auth + data) | Separação de contextos e isolamento de dados |
+| **Dragonfly** | Instância única, Redis-compatible | Cache distribuído para matchmaking e rankings |
+| **Observabilidade** | Prometheus + Grafana + Loki + Tempo + Pyroscope | Stack completa de monitoramento e tracing |
 | **Backup** | Backup diário automático, retenção 30 dias | Proteção de dados críticos |
 
-#### Custos Estimados
-- **VPS Principal**: R$ 350
-- **Domínio e SSL**: R$ 40
-- **APIs Externas**: R$ 0-100 (baseado no uso)
-- **Total Estimado**: R$ 500
+#### Custos de Infraestrutura
+- **VPS**: R$ 399 (12 meses)
+- **Domínio**: R$ 39 (anual)
+- **APIs Externas**: Gratuito (Google Maps API - uso dentro do free tier)
+- **Total**: R$ 438/ano
 
 ### Apêndice C: Plano de Testes
 
-#### Testes Unitários (80% de cobertura)
-- Todos os serviços de domínio
-- Lógica de cálculo de pontuação
-- Validações de entrada
-- Mappers e conversores
+#### Testes Unitários
+- **Backend (.NET)**: 80% de cobertura - serviços de domínio, cálculos de pontuação, validações
+- **Frontend (Vue)**: 25% de cobertura - componentes críticos e composables
 
 #### Testes de Integração
 - APIs entre microsserviços
@@ -393,29 +390,3 @@ O Location404 implementará múltiplas camadas de segurança:
 - Verificação de vulnerabilidades
 - Teste de autenticação
 - Validação de rate limiting
-
-## 8. Avaliações de Professores
-
-### Considerações Professor/a:
-```
-
-
-
-
-```
-
-### Considerações Professor/a:
-```
-
-
-
-
-```
-
-### Considerações Professor/a:
-```
-
-
-
-
-```
